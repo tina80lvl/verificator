@@ -1,13 +1,25 @@
 /* безопасность */
+/* гарантирует, что движение по пересекающимся дорогам не будет идти одновременно */
 [] (ns_safety && ne_safety && es_safety && sw_safety && we_safety)
 
+/* светофор по направлению NS не горит зелёным одновременно с SW или WE */
 #define ns_safety	!(lights[NS] == green && (lights[SW] == green || lights[WE] == green))
+
+/* светофоры по направлениям NE и ES не горят зелёным одновременно */
 #define ne_safety	!(lights[NE] == green && lights[ES] == green)
+
+/* светофор по направлению ES не горит зелёным одновременно с SW или NE, или WE */
 #define es_safety	!(lights[ES] == green && (lights[SW] == green || lights[NE] == green || lights[WE] == green))
+
+/* светофор по направлению SW не горит зелёным одновременно с WE или ES, или NS */
 #define sw_safety	!(lights[SW] == green && (lights[WE] == green || lights[ES] == green || lights[NS] == green))
+
+/* светофор по направлению WE не горит зелёным одновременно с NS или ES, или SW */
 #define we_safety	!(lights[WE] == green && (lights[NS] == green || lights[ES] == green || lights[SW] == green))
 
+
 /* движение */
+/* тут каждая формула описывает, что если светофор по направлению красный и по этому направлению ожидается движение, то в будущий момент времени загорится зелёный */
 [] (
     ((senses[NS] && lights[NS] == red) -> <>(lights[NS] == green)) &&
     ((senses[NE] && lights[NE] == red) -> <>(lights[NE] == green)) &&
@@ -17,7 +29,12 @@
 )
 
 /* корректность */
-[]((<>!(nsgreen && nssense)) && (<>!(negreen && nesense)) && (<>!(esgreen && essense)) && (<>!(swgreen && swsense)) && (<>!(wegreen && wesense)))
+/* тут каждая формула описывает, что трафик по направлению не может находится в состоянии "желания" двигаться при зелёном сигнале светофора */
+[] (
+    (<>!(nsgreen && nssense)) && (<>!(negreen && nesense)) &&
+    (<>!(esgreen && essense)) && (<>!(swgreen && swsense)) &&
+    (<>!(wegreen && wesense))
+)
 
 #define nsgreen (lights[NS] == green)
 #define negreen (lights[NE] == green)
@@ -37,6 +54,16 @@
 #define swsense (senses[SW] == true)
 #define wesense (senses[WE] == true)
 
-
-[]((<>!(lights[NS] == green && senses[NS])) && (<>!(lights[NE] == green && senses[NE])) && (<>!(lights[ES] == green && senses[ES])) && (<>!(lights[SW] == green && senses[SW])) && (<>!(lights[WE] == green && senses[WE])))
-[]((<>!(lights[NS] == green && senses[NS])) && (<>!(lights[NE] == green && senses[NE])) && (<>!(lights[ES] == green && senses[ES])) && (<>!(lights[SW] == green && senses[SW])) && (<>!(lights[WE] == green && senses[WE])))
+/* то же, только развёрнуто */
+/* подробнее, возможны 3 корректные ситуации:
+1) горит зелёный, но движение не ожидается
+2) горит красный и движение ожидается
+3) горит красный и движение не ожидается
+*/
+[] (
+    (<>!(lights[NS] == green && senses[NS])) &&
+    (<>!(lights[NE] == green && senses[NE])) &&
+    (<>!(lights[ES] == green && senses[ES])) &&
+    (<>!(lights[SW] == green && senses[SW])) &&
+    (<>!(lights[WE] == green && senses[WE]))
+)
